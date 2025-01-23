@@ -5,7 +5,7 @@ from module.landmark import get_landmark
 from module.coordinate import get_coordinates
 from module.expand_eye import expand_eye
 from module.shrink_lip import *
-from module.path import extract_skeleton,extract_trajectories
+from module.path import *
 from module.contour import get_contour_image
 
 
@@ -36,12 +36,22 @@ def main(args):
 
     blended_image = blend_lip(inpainted_image, resized_lip_region, position)
 
-    ## 선 따기 및 path 추출
-    skeleton = extract_skeleton(blended_image)
+    blended_image = convert_to_2d(blended_image)
 
-    extract_trajectories(skeleton)
+    start_pos = find_start_point(blended_image)
 
-    print("get path!")
+    if start_pos:
+        
+        _, binary_blended_image = cv2.threshold(blended_image, 128, 255, cv2.THRESH_BINARY)   
+        
+        start_pos = find_start_point(binary_blended_image)
+        path = path_planning(binary_blended_image,start_pos)
+        #print(path)
+        print("get path!")
+    else:
+        print("경로를 찾을 수 없습니다.")
+
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

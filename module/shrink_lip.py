@@ -108,6 +108,20 @@ def blend_lip(inpainted_image, resized_lip_region, position):
 
     return blended_image
 
+def convert_to_2d(image):
+    """
+    3차원 이미지를 2차원으로 변환하는 함수.
+    :param image: 3차원 배열 (H, W, C)
+    :return: 2차원 배열 (H, W)
+    """
+    if len(image.shape) == 3:  # 3차원 데이터일 경우
+        image_2d = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return image_2d
+    elif len(image.shape) == 2:  # 이미 2차원인 경우
+        return image
+    else:
+        raise ValueError(f"Unsupported image shape: {image.shape}")
+
 def blur(image,blended_image, blur_ksize=15):
     """
     입술 영역 경계 깔끔하게.
@@ -137,7 +151,7 @@ if __name__ == "__main__":
     from landmark import get_landmark
     from coordinate import get_coordinates
 
-    image = cv2.imread("./25=11_Cartoonize Effect.jpg") 
+    image = cv2.imread("./module/25=11_Cartoonize Effect.jpg") 
     contour_image = get_contour_image(image)
     results = get_landmark(contour_image)
     landmark_points = get_coordinates(results, image)
@@ -154,8 +168,9 @@ if __name__ == "__main__":
     # 입술 축소
     resized_lip_region = resize_lip(lip_region,lip_scale_factor=0.7)
 
-    # 축소된 입술 삽입 및 경계 부드럽게 처리
     blended_image = blend_lip(inpainted_image,resized_lip_region,position)
+
+    blended_image = convert_to_2d(blended_image)
 
     cv2.imshow("Image", blended_image)
     # cv2.imwrite('contour_image.jpg', contour_image)
