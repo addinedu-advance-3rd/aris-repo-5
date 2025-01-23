@@ -8,7 +8,7 @@ import numpy as np
 def get_contour_image(image):
     # Especificar la configuración del ImageSegmenter
     options = vision.ImageSegmenterOptions(
-        base_options=BaseOptions(model_asset_path="./selfie_multiclass_256x256.tflite"),
+        base_options=BaseOptions(model_asset_path="./module/selfie_multiclass_256x256.tflite"),
         output_category_mask=True,
         running_mode=vision.RunningMode.IMAGE)
     segmenter = vision.ImageSegmenter.create_from_options(options)
@@ -78,11 +78,11 @@ def get_contour_image(image):
 
 ##시각화 테스트##
 if __name__ == "__main__":
-    image = cv2.imread("./25=11_Cartoonize Effect.jpg")
+    image = cv2.imread("./module/25=11_Cartoonize Effect.jpg")
     contour_image = get_contour_image(image)
 
     cv2.imshow("Image", contour_image)
-    cv2.imwrite('contour_image.jpg', contour_image)
+    # cv2.imwrite('contour_image.jpg', contour_image)
 
     while True:
         key = cv2.waitKey(1)  # 1ms 대기

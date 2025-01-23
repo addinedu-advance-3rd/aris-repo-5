@@ -45,7 +45,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image", type=str, default="./25=11_Cartoonize Effect.jpg", help="입력 이미지 경로", required=False )
+    parser.add_argument("--image", type=str, default="./module/25=11_Cartoonize Effect.jpg", help="입력 이미지 경로", required=False )
     parser.add_argument("--mask_padding", type=float, default=15, help="", required=False)
     parser.add_argument("--eye_scale_factor", type=float, default=1.5, help="눈 확대 비율", required=False)
     parser.add_argument("--lip_scale_factor", type=float, default=0.7, help="입 축소 비율", required=False)
