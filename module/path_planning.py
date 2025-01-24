@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from scipy.spatial.distance import cdist
-from collections import deque
 
 # 8방향 (좌측부터 시계방향)
 DIRECTIONS = [
@@ -44,7 +43,7 @@ def find_nearest_white_pixel(image, current_pos):
     
     return tuple(white_pixels[nearest_pixel_idx])
 
-def path_planning(image, start_pos):
+def find_path(image, start_pos):
     """ 이미지 기반 경로 탐색 """
     current_pos = start_pos
     prev_direction = (0, 1)  # 기본 전진 방향 (오른쪽)
@@ -68,22 +67,34 @@ def path_planning(image, start_pos):
 
     return path
 
+# 이미지 로드 및 이진화
+def load_binary_image(path):
+    """ 이미지 로드 후 이진화 """
+    image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    _, binary_image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
+    return binary_image
+
 # 시작점 찾기
 def find_start_point(image):
     """ 이미지에서 가장 먼저 나오는 흰색 픽셀을 시작점으로 설정 """
     white_pixels = np.argwhere(image == 255)
     return tuple(white_pixels[0]) if len(white_pixels) > 0 else None
 
+def path_planning(image):
+        # path planning
+    start_pos = find_start_point(image)
+
+    if start_pos:
+        path = find_path(image, start_pos)
+        print(path)
+    else:
+        return None
+
+    return path
+
 if __name__ == "__main__":
 
-    # 이미지 로드 및 이진화
-    def load_binary_image(path):
-        """ 이미지 로드 후 이진화 """
-        image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-        _, binary_image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
-        return binary_image
-
-    image_path = "/home/addinedu/dev/get_path/module/25=11_Cartoonize Effect.jpg"  # 경로 이미지 파일
+    image_path = "./image/25=11_Cartoonize Effect.jpg"  # 경로 이미지 파일
     image = load_binary_image(image_path)
     
     start_pos = find_start_point(image)
@@ -91,4 +102,3 @@ if __name__ == "__main__":
         path = path_planning(image, start_pos)
     else:
         print("경로를 찾을 수 없습니다.")
- 

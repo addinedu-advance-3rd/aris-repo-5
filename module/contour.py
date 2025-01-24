@@ -1,85 +1,68 @@
-## 외곽선 그리기 ##
-import mediapipe as mp
-from mediapipe.tasks.python import vision
-from mediapipe.tasks.python import BaseOptions
+## 이미지 경계선 검출 ##
+
 import cv2
 import numpy as np
+from skimage.morphology import skeletonize
+from .segment import get_segment_face_image
 
-def get_contour_image(image):
-    # Especificar la configuración del ImageSegmenter
-    options = vision.ImageSegmenterOptions(
-        base_options=BaseOptions(model_asset_path="./module/selfie_multiclass_256x256.tflite"),
-        output_category_mask=True,
-        running_mode=vision.RunningMode.IMAGE)
-    segmenter = vision.ImageSegmenter.create_from_options(options)
+def simplify_skeleton(skeleton, dilate_iterations=1, erode_iterations=1, kernel_size=2):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
 
-    # Leer la imagen de entrada
-    # image = cv2.imread("/home/addinedu/dev_ws/25=11.jpg")
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image_rgb = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
+    # 팽창으로 선 연결 (dilate_iterations 조절 가능)
+    simplified = skeleton.astype(np.uint8)
+    for _ in range(dilate_iterations):
+        simplified = cv2.dilate(simplified, kernel)
 
-    # Obtener los resultados del segmentador
-    segmentation_result = segmenter.segment(image_rgb)
-    print("segmentation_result:", segmentation_result)
-    category_mask = segmentation_result.category_mask
-    confidence_masks = segmentation_result.confidence_masks
+    # 침식으로 선을 단순화 (erode_iterations 조절 가능)
+    for _ in range(erode_iterations):
+        simplified = cv2.erode(simplified, kernel)
 
-    # Convertir las máscaras en arrays de numpy
-    # CONFIDENCE MASKS
-    confidence_masks_np_bg = confidence_masks[0].numpy_view()
-    confidence_masks_np_hair = confidence_masks[1].numpy_view()
-    confidence_masks_np_body_skin = confidence_masks[2].numpy_view()
-    confidence_masks_np_face_skin = confidence_masks[3].numpy_view()
-    confidence_masks_np_clothes = confidence_masks[4].numpy_view()
-    confidence_masks_np_others = confidence_masks[5].numpy_view()
+    # 다시 스켈레톤화
+    simplified = skeletonize(simplified > 0)
+    return simplified
 
-    # CATEGORY MASK
-    category_mask_np = category_mask.numpy_view()
+def get_contour_image(image, hair_mask, face_mask):
 
-    #print(category_mask_np.shape)
-    category_mask_bgr = cv2.cvtColor(category_mask_np, cv2.COLOR_GRAY2BGR)
+    # 외곽선 검출 
+    contours_hair, _ = cv2.findContours(hair_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours_face, _ = cv2.findContours(face_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    combined_contours = contours_hair + contours_face
 
-    #print(category_mask_bgr.shape)
-    category_mask_bgr[np.where(category_mask_np == 0)] = (255, 0, 0) # Azul: Fondo
-    category_mask_bgr[np.where(category_mask_np == 1)] = (0, 255, 0) # Verde: Cabello
-    category_mask_bgr[np.where(category_mask_np == 2)] = (0, 0, 255) # Rojo: Piel del cuerpo
-    category_mask_bgr[np.where(category_mask_np == 3)] = (255, 255, 0) # Cian: Piel de la cara
-    category_mask_bgr[np.where(category_mask_np == 4)] = (255, 0, 255) # Rosa: Ropa
-    category_mask_bgr[np.where(category_mask_np == 5)] = (0, 255, 255) # Amarillo: Otros
+    # 검은 배경 생성
+    contour_image = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
 
-    # hair와 face_skin만 threshold로 마스크화 (예: 0.5 이상을 해당 영역으로 본다고 가정)
-    hair_mask = (confidence_masks_np_hair > 0.5).astype(np.uint8)
-    face_mask = (confidence_masks_np_face_skin > 0.5).astype(np.uint8)
+    # 외곽선 그리기
+    cv2.drawContours(contour_image, combined_contours, -1, 255, 1)
 
-    # 두 마스크를 합쳐서(OR 연산) "머리카락 + 얼굴피부" 영역만 살리기
-    combined_mask = hair_mask | face_mask  # shape: (height, width)
+    # 원본 이미지를 복사해서 얼굴 영역만 남기기
+    face_mask_3ch = np.stack([face_mask, face_mask, face_mask], axis=-1)
+    face_image = image.copy()
+    face_image[face_mask_3ch == 0] = 0
 
-    # 마스크를 3채널로 확장
-    combined_mask_3ch = np.stack([combined_mask, combined_mask, combined_mask], axis=-1)
+    # 얼굴 블러 처리
+    blurred = cv2.GaussianBlur(face_image, (3,3), 1.5)
 
-    # 원본 이미지를 복사해서 머리카락+얼굴 영역만 남기기
-    contour_image = image.copy()
-    contour_image[combined_mask_3ch == 0] = 0  # 마스크가 0인 부분(머리카락, 얼굴 아닌 부분)은 검정색 처리
-    edges = cv2.Canny(contour_image, 100, 200)
-    
+    # 얼굴 엣지
+    blurred_gray = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(blurred_gray, 100, 200)
 
-    # # 외곽선 검출
-    # contours_hair, _ = cv2.findContours(hair_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # contours_face, _ = cv2.findContours(face_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # combined_contours = contours_hair + contours_face
-    # # 검은 배경 생성 (외곽선만 보이게)
-    # contour_image = np.zeros_like(image)
+    # 외곽선 + 얼굴 엣지
+    contour_image = cv2.bitwise_or(contour_image, edges)
 
-    # # 외곽선 그리기 (하얀색)
-    # cv2.drawContours(contour_image, combined_contours, -1, (255, 255, 255), 1)
+    # 스켈레톤 처리
+    skeleton = skeletonize(contour_image // 255) * 255
+    simple_skeleton = simplify_skeleton(skeleton)
+    contour_image = (simple_skeleton * 255).astype(np.uint8)
 
-    return contour_image 
+    cv2.imwrite('canny_img.jpg', contour_image)
 
+    return contour_image
 
-##시각화 테스트##
 if __name__ == "__main__":
-    image = cv2.imread("./module/25=11_Cartoonize Effect.jpg")
-    contour_image = get_contour_image(image)
+
+    image = cv2.imread("./image/25=11_Cartoonize Effect.jpg")
+    segment_face_image, hair_mask, face_mask = get_segment_face_image(image)
+    contour_image = get_contour_image(segment_face_image, hair_mask, face_mask)
 
     cv2.imshow("Image", contour_image)
     # cv2.imwrite('contour_image.jpg', contour_image)
@@ -89,5 +72,4 @@ if __name__ == "__main__":
         if key == ord('q'):  # 'q' 키의 ASCII 코드 확인
             break
 
-    # 창 닫기
     cv2.destroyAllWindows()

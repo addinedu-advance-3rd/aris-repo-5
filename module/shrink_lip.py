@@ -1,8 +1,12 @@
-### 입술 축소 ###
+## 입술 축소 ##
+
 import cv2
 import numpy as np
+from .segment import get_segment_face_image
+from .landmark import get_landmark
+from .coordinate import get_coordinates
 
-def fill_skin_color(image, lip_points, mask_padding):
+def remove_lip(image, lip_points, mask_padding):
     """
     입술 영역과 주변을 피부색으로 채우는 함수.
 
@@ -27,31 +31,27 @@ def fill_skin_color(image, lip_points, mask_padding):
     # 검은 영역을 피부색으로 채우기
     inpainted_image = cv2.inpaint(image_masked, expanded_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
 
-    return inpainted_image, expanded_mask
+    return inpainted_image
 
+def scale_points(points, x_center, y_center, scale_factor):
+    scaled = []
+    for x, y in points:
+        new_x = int(x_center + (x - x_center) * scale_factor)
+        new_y = int(y_center + (y - y_center) * scale_factor)
+        scaled.append((new_x, new_y))
+    return scaled
 
-def shrink_lip(image, lip_points, scale_factor=1.35):
+def resize_lip_region(image, lip_points, scale_factor=1.35):
     """
     입술 영역 이미지를 생성하는 함수.
-
     """
     # 입술 중심점 계산
     x_center = sum(p[0] for p in lip_points) / len(lip_points)
     y_center = sum(p[1] for p in lip_points) / len(lip_points)
 
-    # 축소된 좌표 계산
-    def scale_points(points, x_center, y_center, scale_factor):
-        scaled = []
-        for x, y in points:
-            new_x = int(x_center + (x - x_center) * scale_factor)
-            new_y = int(y_center + (y - y_center) * scale_factor)
-            scaled.append((new_x, new_y))
-        return scaled
-
     shrunk_lip_points = scale_points(lip_points, x_center, y_center, scale_factor)
 
     # 축소된 입술 영역 생성
-    shrunk_lip_polygon = np.array(shrunk_lip_points, dtype=np.int32)
     x_coords = [p[0] for p in shrunk_lip_points]
     y_coords = [p[1] for p in shrunk_lip_points]
     x_min, x_max = min(x_coords), max(x_coords)
@@ -62,15 +62,13 @@ def shrink_lip(image, lip_points, scale_factor=1.35):
 
     return lip_region_resized, (x_min, x_max, y_min, y_max)
 
-def resize_lip(lip_region,lip_scale_factor=0.8):
+def resize_lip(lip_region, lip_scale_factor=0.8):
     """
     입술 영역 축소.
     """
     resized_lip_region = cv2.resize(lip_region, None, fx=lip_scale_factor, fy=lip_scale_factor)
     
     return resized_lip_region
-
-
 
 def blend_lip(inpainted_image, resized_lip_region, position):
     """
@@ -108,21 +106,7 @@ def blend_lip(inpainted_image, resized_lip_region, position):
 
     return blended_image
 
-def convert_to_2d(image):
-    """
-    3차원 이미지를 2차원으로 변환하는 함수.
-    :param image: 3차원 배열 (H, W, C)
-    :return: 2차원 배열 (H, W)
-    """
-    if len(image.shape) == 3:  # 3차원 데이터일 경우
-        image_2d = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        return image_2d
-    elif len(image.shape) == 2:  # 이미 2차원인 경우
-        return image
-    else:
-        raise ValueError(f"Unsupported image shape: {image.shape}")
-
-def blur(image,blended_image, blur_ksize=15):
+def blur(image, blended_image, inpainted_image, blur_ksize=15):
     """
     입술 영역 경계 깔끔하게.
     """
@@ -142,37 +126,33 @@ def blur(image,blended_image, blur_ksize=15):
 
     return final_image
 
-
-## 테스트 ##
-if __name__ == "__main__":
-
-    import cv2
-    from contour import get_contour_image
-    from landmark import get_landmark
-    from coordinate import get_coordinates
-
-    image = cv2.imread("./module/25=11_Cartoonize Effect.jpg") 
-    contour_image = get_contour_image(image)
-    results = get_landmark(contour_image)
-    landmark_points = get_coordinates(results, image)
-
-    # 입술 좌표 예시
-    lip_points = landmark_points["lip"]
-
-    # 피부색으로 채우기
-    inpainted_image, mask = fill_skin_color(image, lip_points, mask_padding=25)
+def shrink_lip(image, lip_points, mask_padding=25):
+    # 입술 지우기
+    inpainted_image = remove_lip(image, lip_points, mask_padding)
 
     # 입술 영역 생성
-    lip_region, position = shrink_lip(image, lip_points, scale_factor=1.35)
+    lip_region, position = resize_lip_region(image, lip_points, scale_factor=1.35)
 
     # 입술 축소
     resized_lip_region = resize_lip(lip_region,lip_scale_factor=0.7)
 
-    blended_image = blend_lip(inpainted_image,resized_lip_region,position)
+    # 입술 그리기
+    shrink_lip_image = blend_lip(inpainted_image,resized_lip_region,position)
 
-    blended_image = convert_to_2d(blended_image)
+    return shrink_lip_image
 
-    cv2.imshow("Image", blended_image)
+if __name__ == "__main__":
+
+    image = cv2.imread("./image/25=11_Cartoonize Effect.jpg") 
+    contour_image = get_segment_face_image(image)
+    results = get_landmark(contour_image)
+    landmark_points = get_coordinates(results, image)
+
+    lip_points = landmark_points["lip"]
+
+    shrink_lip_image = shrink_lip(image, lip_points, mask_padding=25)
+
+    cv2.imshow("Image", shrink_lip_image)
     # cv2.imwrite('contour_image.jpg', contour_image)
 
     while True:
@@ -180,5 +160,4 @@ if __name__ == "__main__":
         if key == ord('q'):  # 'q' 키의 ASCII 코드 확인
             break
 
-    # 창 닫기
     cv2.destroyAllWindows()
