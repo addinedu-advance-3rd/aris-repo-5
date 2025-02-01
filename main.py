@@ -7,7 +7,7 @@ from module.expand_eye import expand_eye
 from module.shrink_lip import shrink_lip
 from module.contour import get_contour_image
 from module.path_planning import *
-
+from module.arm_path import convert_coordinates, visualize_mapped_path, arm_coordinates
 
 def main(args):
 
@@ -34,13 +34,32 @@ def main(args):
 
     # path planning
     path = path_planning(contour_image)
-    print(path)
+    #print(path)
+
+    a,b,_ = image.shape
+    converted_path = convert_coordinates(path,a,b)
+    #print(converted_path)
+    # visualize_mapped_path(converted_path)
+    arm_result = arm_coordinates(converted_path)
+    print(converted_path)
+    
+    return arm_result
+    
+    # cv2.imshow("Image", shrink_lip_image)
+    # # cv2.imwrite('contour_image.jpg', contour_image)
+
+    # while True:
+    #     key = cv2.waitKey(1)  # 1ms 대기
+    #     if key == ord('q'):  # 'q' 키의 ASCII 코드 확인
+    #         break
+
+    # cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image", type=str, default="./module/image/25=11_Cartoonize Effect.jpg", help="입력 이미지 경로", required=False)
-    parser.add_argument("--mask_padding", type=float, default=15, help="", required=False)
-    parser.add_argument("--eye_scale_factor", type=float, default=1.2, help="눈 확대 비율", required=False)
+    parser.add_argument("--image", type=str, default="/home/addinedu/aris/123/aris-repo-5/module/image/25=11_Cartoonize Effect.jpg", help="입력 이미지 경로", required=False)
+    parser.add_argument("--mask_padding", type=float, default=23, help="", required=False)
+    parser.add_argument("--eye_scale_factor", type=float, default=1.3, help="눈 확대 비율", required=False)
     parser.add_argument("--lip_scale_factor", type=float, default=0.7, help="입 축소 비율", required=False)
     
     args= parser.parse_args()
