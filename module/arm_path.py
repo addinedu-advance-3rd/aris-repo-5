@@ -40,7 +40,7 @@ class RobotPathPlanner:
                     if self.converted_path[-1] == ('up','up'):
                         self.converted_path.append((x,y))
                     else:
-                        if (self.converted_path[-1][0] != x and abs(self.converted_path[-1][1] - y) > 5) or (self.converted_path[-1][1] != y and abs(self.converted_path[-1][0] - x) > 5): ## 2차이 이상
+                        if (self.converted_path[-1][0] != x and abs(self.converted_path[-1][1] - y) > 1) or (self.converted_path[-1][1] != y and abs(self.converted_path[-1][0] - x) > 1): ## 2차이 이상
                             self.converted_path.append((x,y))
         
     def del_up(self):
@@ -74,7 +74,7 @@ class RobotPathPlanner:
 
         z,r,p,yaw = 164,130,85,-37.6 ##그림 그릴 때 초기 좌표 값
 
-        arm_coordinates = [[self.converted_path[0][0],self.converted_path[0][1],z,r,p,yaw]]
+        arm_coordinates = [[self.converted_path[0][0],self.converted_path[0][1],z+10,r,p,yaw]]
 
         for (x,y) in self.converted_path[1:]:
             if arm_coordinates[-1] == ['up']:
@@ -86,8 +86,9 @@ class RobotPathPlanner:
                     arm_coordinates.append(['down'])
                 else:
                     arm_coordinates.append([x,y,z,r,p,yaw])
-        print('arm_coods =' , arm_coordinates)
-    
+        #print('arm_coods =' , arm_coordinates)
+        return arm_coordinates
+
     def run(self,path,image):
         '''
         전체 과정 실행
