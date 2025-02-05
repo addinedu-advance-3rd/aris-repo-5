@@ -1,5 +1,6 @@
 import cv2
 import argparse
+from module.crop_image import crop_face_from_image
 from module.segment import get_segment_face_image
 from module.landmark import get_landmark
 from module.coordinate import get_coordinates
@@ -11,7 +12,9 @@ from module.arm_path import RobotPathPlanner
 
 def main(args):
 
-    image = cv2.imread(args.image)
+    # image = cv2.imread(args.image)
+
+    image = crop_face_from_image(args.image)
 
     segment_face_image, hair_mask, face_mask = get_segment_face_image(image)
 
@@ -32,6 +35,7 @@ def main(args):
     # 컨투어
     #contour_image = get_contour_image(shrink_lip_image, hair_mask, face_mask)
     contour_image = get_contour_image(image, hair_mask, face_mask)
+    cv2.imshow("Image", contour_image)
 
     # path planning
     path = path_planning(contour_image)
@@ -40,9 +44,6 @@ def main(args):
 
     arm_result = robot_path_planner.run(path,image)
     
-    cv2.imshow("Image", contour_image)
-    cv2.imwrite('contour_image.jpg', contour_image)
-
     while True:
         key = cv2.waitKey(1)  # 1ms 대기
         if key == ord('q'):  # 'q' 키의 ASCII 코드 확인
