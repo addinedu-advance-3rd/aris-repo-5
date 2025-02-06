@@ -44,6 +44,13 @@ def get_contour_image(image, hair_mask, face_mask):
 
     # 얼굴 엣지
     blurred_gray = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
+
+    # 코 인식을 위한 명암 극대화
+    cv2.imwrite('blurred_gray_before.jpg', blurred_gray)
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4,4))
+    blurred_gray = clahe.apply(blurred_gray)
+    cv2.imwrite('blurred_gray.jpg', blurred_gray)
+
     edges = cv2.Canny(blurred_gray, 100, 200)
 
     # 외곽선 + 얼굴 엣지
