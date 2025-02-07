@@ -38,6 +38,8 @@ def save_order_to_db():
 
         conn.commit()  # 변경 사항 저장
         st.success("✅ 주문이 성공적으로 저장되었습니다!")
+        print(st.session_state.cart)
+
         print(f"🔹 저장된 주문 ID: {st.session_state.order_id}")  # ✅ 디버깅용
 
         # 장바구니 비우고 캐리커쳐 선택 페이지로 이동
