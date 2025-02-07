@@ -39,16 +39,10 @@ def save_order_to_db():
 
         conn.commit()
         st.success("✅ 주문이 성공적으로 저장되었습니다!")
-<<<<<<< HEAD
-        print(st.session_state.cart)
-
-        print(f"🔹 저장된 주문 ID: {st.session_state.order_id}")  # ✅ 디버깅용
-=======
 
         # ✅ 최신 주문 목록을 세션에 저장
         st.session_state.latest_order_ids = new_order_ids
         print(f"🆕 최신 주문 목록 저장: {st.session_state.latest_order_ids}")
->>>>>>> 6e59ff8 (updated customer service)
 
         # 장바구니 비우고 캐리커쳐 선택 페이지로 이동
         st.session_state.cart = []
