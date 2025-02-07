@@ -44,8 +44,6 @@ def save_order_to_db():
         st.session_state.latest_order_ids = new_order_ids
         print(f"🆕 최신 주문 목록 저장: {st.session_state.latest_order_ids}")
 
-        # 장바구니 비우고 캐리커쳐 선택 페이지로 이동
-        st.session_state.cart = []
         st.session_state.page = "caricature_page"
         st.rerun()
 
@@ -56,7 +54,6 @@ def save_order_to_db():
     finally:
         cursor.close()
         conn.close()
-
 
 
 def cart_page():

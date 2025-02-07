@@ -56,7 +56,7 @@ def caricature_page():
         return
 
     caricature_choices = {}
-
+    
     for order_id, flavor_name, topping_names in orders:
         st.subheader(f"주문 번호: {order_id} - 맛: {flavor_name}")
         st.write(f"토핑: {topping_names if topping_names else '없음'}")
@@ -67,6 +67,7 @@ def caricature_page():
             key=f"caricature_{order_id}"
         )
         caricature_choices[order_id] = (choice == "캐리커쳐 선택")
+
 
     print(f"✅ 선택된 캐리커쳐 상태: {caricature_choices}")
 
@@ -81,3 +82,21 @@ def caricature_page():
             st.session_state.page = "pickup_page"  # 모두 선택 안 했으면 pickup_page 이동
         print(f"🔀 이동할 페이지: {st.session_state.page}")
         st.rerun()
+
+
+        # order_info = []
+        # print(st.session_state.cart)
+        # print('============================================')
+        # print('사람 수 :' , len(st.session_state.cart)) ## 사람 수
+        # for i in range(len(st.session_state.cart)):
+        #     print('{0}번 menu :'.format(i+1), st.session_state.cart[i]['menu'])
+        #     print('{0}번 topping :'.format(i+1) , st.session_state.cart[i]['toppings'].keys())
+        # for i in range(len(st.session_state.cart)):
+        #     menu = st.session_state.cart[i]['menu']
+        #     toppings = list(st.session_state.cart[i]['toppings'].keys())
+        #     order_info.append([menu,toppings])
+        # st.session_state.order_info = order_info
+        # print(st.session_state.order_info)
+        # print(st.session_state)
+        # print('order_info : ' , order_info)
+        # print(f":작은_파란색_다이아몬드: 저장된 주문 ID: {st.session_state.order_id}")  # :흰색_확인_표시: 디버깅용
