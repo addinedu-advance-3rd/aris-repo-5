@@ -1,0 +1,5 @@
+mediapipe==0.10.20
+opencv-contrib-python==4.11.0.86
+pillow @ file:///croot/pillow_1734430590456/work
+scikit-image==0.25.0
+scipy==1.15.1
