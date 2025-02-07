@@ -126,10 +126,9 @@ def camera_page():
                 st.session_state["captured_photo"] = None
                 st.session_state["final_sketch"] = None
                 st.session_state["original_path"] = None
-
                 st.rerun()
-        st.rerun()
     else:
         if st.session_state["final_sketch"]:
             if st.button("🖼️ 변환된 스케치 보기"):
                 st.session_state.page = "result_page"
+                st.rerun()
