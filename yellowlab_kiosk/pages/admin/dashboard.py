@@ -57,9 +57,9 @@ def dashboard_page():
 
     # ✅ 1. 주요 통계 정보 (오늘의 주문, 매출, 캐리커쳐 비율)
     col1, col2, col3 = st.columns(3)
-    col1.metric(label="📦 총 주문 수", value=f"{data['total_orders']} 건")
-    col2.metric(label="💰 총 매출액", value=f"{data['total_revenue']} 원")
-    col3.metric(label="🎨 캐리커쳐 선택률", value=f"{data['caricature_ratio']} %")
+    col1.metric(label="📦 총 주문 수/일", value=f"{data['total_orders']} 건")
+    col2.metric(label="💰 총 매출액/일", value=f"{data['total_revenue']} 원")
+    col3.metric(label="🎨 캐리커쳐 선택률/일", value=f"{data['caricature_ratio']} %")
 
     st.divider()  # 구분선
 

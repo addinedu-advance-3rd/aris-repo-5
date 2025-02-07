@@ -51,21 +51,7 @@ def get_topping_cart_count(topping_id, topping_options):
             if value['id'] == topping_id:
                 cart_count += 1
                 print(f'{key}의 토핑 개수 {cart_count}')
-    # if len(st.session_state.cart) > 0:
-    #     for item in st.session_state.cart[0].items():  # 장바구니의 각 아이템을 순회
-    #         print(item)
-        # if len(item["toppings"]) > 0:  # 토핑이 존재하는 경우
-        #     for topping in item["toppings"]:
-        #         print(topping)
-        #         cart_count += 1  # ✅ 개별 토핑 개수 정확히 반영
-    # print(st.session_state.cart)
-    # cart_count = sum(
-    #     1  # ✅ 개별 토핑 개수 정확히 반영
-    #     for item in st.session_state.cart
-    #     if topping_id in item["toppings"]
-    #     for topping_data in [item["toppings"][topping_id]]
-    # )
-    
+                
     return selected_count + cart_count  # ✅ 현재 선택한 개수 + 장바구니 개수 합산
 
 
