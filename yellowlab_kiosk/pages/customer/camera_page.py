@@ -44,7 +44,7 @@ def save_caricature_to_db(order_id, original_image_path, caricature_image_path):
     except Exception as e:
         conn.rollback()
         st.error(f"❌ 스케치 데이터 저장 실패: {e}")
-
+    
     finally:
         cursor.close()
         conn.close()

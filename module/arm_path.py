@@ -27,6 +27,8 @@ class RobotPathPlanner:
             a,b,_ = image.shape
         else:
             a,b = image.shape
+        
+        print(a,b)
 
         scale = (beta/b)
         self.converted_path.append([-218,10.2]) #시작점
@@ -40,7 +42,7 @@ class RobotPathPlanner:
                     if self.converted_path[-1] == ('up','up'):
                         self.converted_path.append((x,y))
                     else:
-                        if (self.converted_path[-1][0] != x and abs(self.converted_path[-1][1] - y) > 1) or (self.converted_path[-1][1] != y and abs(self.converted_path[-1][0] - x) > 1): ## 2차이 이상
+                        if (self.converted_path[-1][0] != x and abs(self.converted_path[-1][1] - y) > 0) or (self.converted_path[-1][1] != y and abs(self.converted_path[-1][0] - x) > 0): ## 2차이 이상
                             self.converted_path.append((x,y))
         
     def del_up(self):
@@ -50,7 +52,7 @@ class RobotPathPlanner:
         arm_path = []
         for i in range(len(self.converted_path)-1):
             if self.converted_path[i][0] == 'up':
-                if abs(self.converted_path[i-1][0]-self.converted_path[i+1][0]) > 2 or abs(self.converted_path[i-1][1]-self.converted_path[i+1][1]) > 2 :
+                if abs(self.converted_path[i-1][0]-self.converted_path[i+1][0]) > 1 or abs(self.converted_path[i-1][1]-self.converted_path[i+1][1]) > 1 :
                     arm_path.append(self.converted_path[i])
             else :
                 arm_path.append(self.converted_path[i])
@@ -72,13 +74,15 @@ class RobotPathPlanner:
         (x,y)좌표를 [x,y,z,r,p,yaw]로 변환
         '''
 
-        z,r,p,yaw = 164,130,85,-37.6 ##그림 그릴 때 초기 좌표 값
+        z,r,p,yaw = 166,130,85,-37.6 ##그림 그릴 때 초기 좌표 값
 
-        arm_coordinates = [[self.converted_path[0][0],self.converted_path[0][1],z+10,r,p,yaw]]
+        ## 초기값 세팅
+        arm_coordinates = [[self.converted_path[0][0],self.converted_path[0][1],z+10,r,p,yaw]
+                           ,[self.converted_path[1][0],self.converted_path[1][1],z+10,r,p,yaw]]
 
         for (x,y) in self.converted_path[1:]:
             if arm_coordinates[-1] == ['up']:
-                arm_coordinates.append([x,y,174,r,p,yaw])
+                arm_coordinates.append([x,y,176,r,p,yaw])
             else :    
                 if x == 'up':
                     arm_coordinates.append(['up'])

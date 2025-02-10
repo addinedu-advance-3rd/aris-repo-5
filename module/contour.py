@@ -27,10 +27,10 @@ def get_contour_image(image, hair_mask, face_mask):
     contours_hair, _ = cv2.findContours(hair_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours_face, _ = cv2.findContours(face_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     combined_contours = contours_hair + contours_face
-
+    
     # 검은 배경 생성
     contour_image = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
-
+    
     # 외곽선 그리기
     cv2.drawContours(contour_image, combined_contours, -1, 255, 1)
 
@@ -39,28 +39,30 @@ def get_contour_image(image, hair_mask, face_mask):
     face_image = image.copy()
     face_image[face_mask_3ch == 0] = 0
 
-    # 얼굴 블러 처리
-    blurred = cv2.GaussianBlur(face_image, (3,3), 1.5)
+    # # 얼굴 블러 처리
+    # blurred = cv2.GaussianBlur(face_image, (3,3), 1.5)
 
     # 얼굴 엣지
-    blurred_gray = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(blurred_gray, 100, 200)
+    blurred_gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(blurred_gray, 50, 200)
 
     # 외곽선 + 얼굴 엣지
     contour_image = cv2.bitwise_or(contour_image, edges)
 
+    cv2.imwrite('canny_img.jpg', contour_image)
+    
     # 스켈레톤 처리
     skeleton = skeletonize(contour_image // 255) * 255
     simple_skeleton = simplify_skeleton(skeleton)
     contour_image = (simple_skeleton * 255).astype(np.uint8)
 
-    cv2.imwrite('canny_img.jpg', contour_image)
+    
 
     return contour_image
 
 if __name__ == "__main__":
 
-    image = cv2.imread("./image/25=11_Cartoonize Effect.jpg")
+    image = cv2.imread("./module/image/25=11_Cartoonize Effect.jpg")
     segment_face_image, hair_mask, face_mask = get_segment_face_image(image)
     contour_image = get_contour_image(segment_face_image, hair_mask, face_mask)
 

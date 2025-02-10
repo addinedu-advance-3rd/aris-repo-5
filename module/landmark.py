@@ -1,5 +1,9 @@
 ## mediapipe landmark 계산 ##
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0: 모든 메시지, 3: 에러만
+os.environ['GLOG_minloglevel'] = '3'
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR)
 import cv2
 import mediapipe as mp
 from .segment import get_segment_face_image
@@ -38,7 +42,7 @@ def get_landmark(image):
       
 if __name__ == "__main__":
 
-  image = cv2.imread("./image/25=11_Cartoonize Effect.jpg")
+  image = cv2.imread("/home/addinedu/aris/aris-repo-5/image.png")
   segment_face_image = get_segment_face_image(image)
 
   get_landmark(segment_face_image)

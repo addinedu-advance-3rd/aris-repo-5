@@ -1,5 +1,9 @@
 ## 이미지에서 얼굴만 분류 ##
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0: 모든 메시지, 3: 에러만
+os.environ['GLOG_minloglevel'] = '3'
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR)
 import mediapipe as mp
 from mediapipe.tasks.python import vision
 from mediapipe.tasks.python import BaseOptions
@@ -51,7 +55,7 @@ def get_segment_face_image(image):
 
 if __name__ == "__main__":
 
-    image = cv2.imread("./image/25=11_Cartoonize Effect.jpg")
+    image = cv2.imread("/home/addinedu/aris/image copy 2.png")
     segment_face_image = get_segment_face_image(image)
 
     cv2.imshow("Image", segment_face_image)
