@@ -1,5 +1,7 @@
 ## 입술 축소 ##
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0: 모든 메시지, 3: 에러만
+os.environ['GLOG_minloglevel'] = '3'
 import cv2
 import numpy as np
 from .segment import get_segment_face_image
@@ -143,7 +145,7 @@ def shrink_lip(image, lip_points, mask_padding=25):
 
 if __name__ == "__main__":
 
-    image = cv2.imread("./image/25=11_Cartoonize Effect.jpg") 
+    image = cv2.imread("/home/addinedu/aris/123/aris-repo-5/module/image/25=11_Cartoonize Effect.jpg") 
     contour_image = get_segment_face_image(image)
     results = get_landmark(contour_image)
     landmark_points = get_coordinates(results, image)

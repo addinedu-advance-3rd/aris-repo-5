@@ -1,5 +1,7 @@
 ## 얼굴 부위 별 좌표 추출 ##
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0: 모든 메시지, 3: 에러만
+os.environ['GLOG_minloglevel'] = '3'
 import cv2
 from .segment import get_segment_face_image
 from .landmark import get_landmark
@@ -43,7 +45,7 @@ def get_coordinates(landmark_results, image):
 
 if __name__ == "__main__":
 
-  image = cv2.imread("./image/25=11_Cartoonize Effect.jpg") 
+  image = cv2.imread("/home/addinedu/aris/image copy 2.png") 
   segment_face_image = get_segment_face_image(image)
   landmark_results = get_landmark(segment_face_image)
   landmark_points = get_coordinates(landmark_results, image)
