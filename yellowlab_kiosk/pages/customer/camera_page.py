@@ -1,22 +1,20 @@
-#6단계: 카메라 캡쳐 및 스케치 변환
-
 import streamlit as st
 import numpy as np
 import os
 from PIL import Image
 import cv2
-from utils.db_connector import get_db_connection  # ✅ MySQL 연결 추가
-from utils.communication import send_order_data
-
+from utils.db_connector import get_db_connection
 
 # 기본 저장 디렉토리
 BASE_IMAGE_PATH = "images/caricatures"
 
-def create_order_folder(order_id):
-    """ 주문 번호별 폴더 생성 """
-    order_folder = os.path.join(BASE_IMAGE_PATH, str(order_id))
-    os.makedirs(order_folder, exist_ok=True)  # 폴더가 없으면 생성
-    return order_folder
+def get_next_original_filename(index):
+    """ original_1, original_2, ... 형식으로 저장하되 새로운 주문마다 덮어쓰기 """
+    return os.path.join(BASE_IMAGE_PATH, f"original_{index}.jpg")
+
+def get_next_sketch_filename(index):
+    """ sketch_1, sketch_2, ... 형식으로 저장하되 새로운 주문마다 덮어쓰기 """
+    return os.path.join(BASE_IMAGE_PATH, f"sketch_{index}.jpg")
 
 def dodgeV2(x, y):
     return cv2.divide(x, 255 - y, scale=256)
@@ -32,94 +30,96 @@ def save_caricature_to_db(order_id, original_image_path, caricature_image_path):
     """ MySQL에 캐리커쳐 데이터 저장 """
     conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
         cursor.execute(
             "INSERT INTO caricature (order_id, original_image_path, caricature_image_path) VALUES (%s, %s, %s)",
             (order_id, original_image_path, caricature_image_path)
         )
         conn.commit()
-        st.success("✅ 스케치 이미지가 MySQL에 저장되었습니다!")
-
     except Exception as e:
         conn.rollback()
         st.error(f"❌ 스케치 데이터 저장 실패: {e}")
-    
     finally:
         cursor.close()
         conn.close()
 
 def camera_page():
     st.title("📷 사진 촬영 및 스케치 변환")
-
-    if "photos" not in st.session_state:
-        st.session_state["photos"] = []
-        st.session_state["selected_photo"] = None
-        st.session_state["final_sketch"] = None
-
-    image = st.camera_input("📸 사진을 촬영하세요!")
-
-    if image:
-        if len(st.session_state["photos"]) < 3:
-            st.session_state["photos"].append(image)
-            st.success(f"✅ 사진이 저장되었습니다! 현재 {len(st.session_state['photos'])}/3")
-        else:
-            st.warning("⚠️ 최대 3장의 사진만 촬영할 수 있습니다!")
     
-    if st.session_state["photos"]:
-        st.subheader("📸 촬영된 사진")
-        cols = st.columns(3)
-        for i, photo in enumerate(st.session_state["photos"]):
-            with cols[i]:
-                st.image(photo, use_column_width=True, caption=f"사진 {i + 1}")
-        
-        st.session_state["selected_photo"] = st.radio(
-            "🎨 스케치 변환할 사진을 선택하세요:",
-            options=list(range(len(st.session_state["photos"]))),
-            format_func=lambda x: f"사진 {x + 1}",
-        )
-        image_path = "/home/addinedu/aris/aris-repo-5_통신/yellowlab_kiosk/images/caricatures/10"
-        ########################################    
-        send_order_data(st.session_state.order_info,image_path,len(st.session_state.order_info) )
-        #########################################
-    if st.button("🖌️ 스케치 변환하기"):
-        if st.session_state["selected_photo"] is not None:
-            selected_index = st.session_state["selected_photo"]
-            selected_image = st.session_state["photos"][selected_index]
+    if "latest_order_ids" not in st.session_state or not st.session_state.latest_order_ids:
+        st.warning("🚨 새로운 주문 정보가 없습니다! 이전 단계로 돌아가세요.")
+        return
 
-            input_img = Image.open(selected_image)
-            final_sketch = pencilsketch(np.array(input_img))
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """
+        SELECT order_id FROM orders WHERE order_id IN ({}) AND selected_caricature = 1
+    """.format(','.join(['%s'] * len(st.session_state.latest_order_ids)))
+    cursor.execute(query, st.session_state.latest_order_ids)
+    caricature_orders = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    conn.close()
 
-            # ✅ 주문 번호별 폴더 생성
-            order_id = st.session_state.order_id
-            order_folder = create_order_folder(order_id)
+    if not caricature_orders:
+        st.session_state.page = "pickup_page"
+        st.rerun()
+        return
 
-            # ✅ 개별 폴더 내에 파일 저장
-            original_path = os.path.join(order_folder, "original.jpg")
-            sketch_path = os.path.join(order_folder, "sketch.jpg")
+    st.session_state["caricature_order_ids"] = caricature_orders
 
+    if "current_order_index" not in st.session_state:
+        st.session_state["current_order_index"] = 0
+        st.session_state["photo_taken"] = False
+
+    current_order_index = st.session_state["current_order_index"]
+
+    if current_order_index >= len(caricature_orders):
+        st.session_state.page = "pickup_page"
+        st.rerun()
+        return
+
+    current_order_id = caricature_orders[current_order_index]
+    st.subheader(f"🧑‍🎨 주문 번호 {current_order_id} 고객의 사진을 촬영하세요!")
+
+    # ✅ 주문이 변경될 때마다 카메라 입력을 강제 초기화
+    if "prev_order_index" not in st.session_state or st.session_state["prev_order_index"] != current_order_index:
+        st.session_state["photo_taken"] = False
+        st.session_state["prev_order_index"] = current_order_index  # 주문 변경 감지
+
+    # ✅ st.empty()를 사용하여 카메라 입력 강제 초기화
+    camera_container = st.empty()
+    image = camera_container.camera_input("📸 'Take Photo'를 눌러 사진을 촬영하세요!", key=f"camera_{current_order_index}")
+    st.write("재촬영을 원하시면 'Clear photo'를 눌러 새로운 사진을 촬영하세요!")
+    if image:
+        try:
+            original_path = get_next_original_filename(current_order_index + 1)
+            input_img = Image.open(image)
             input_img.save(original_path)
+
+            sketch_path = get_next_sketch_filename(current_order_index + 1)
+            final_sketch = pencilsketch(np.array(input_img))
             Image.fromarray(final_sketch).save(sketch_path)
 
-            save_caricature_to_db(order_id, original_path, sketch_path)
+            save_caricature_to_db(current_order_id, original_path, sketch_path)
 
-            st.session_state["final_sketch"] = sketch_path
+            st.session_state["photo_taken"] = True  # ✅ 사진이 저장된 후에만 True 설정
+        except Exception as e:
+            st.error(f"❌ 사진 저장 실패: {e}")
+            st.session_state["photo_taken"] = False  # 🚀 저장 실패 시 False로 유지
+     # ✅ "다음 주문 사진 촬영" 버튼을 사진 촬영 전까지 비활성화
+    next_button_disabled = not st.session_state["photo_taken"]
 
-            st.success(f"✅ 사진 {selected_index + 1}이(가) 스케치로 변환되었습니다!")
-            one, two = st.columns(2)
-            with one:
-                st.write("📸 **원본 사진**")
-                st.image(original_path, use_column_width=True)
-            with two:
-                st.write("🖼️ **스케치 사진**")
-                st.image(sketch_path, use_column_width=True)
-
-        else:
-            st.warning("⚠️ 변환할 사진을 선택하세요!")
-
-    if st.button("🍦 아이스크림 제조 시작"):
-        if st.session_state["final_sketch"] is not None:
-            st.session_state.page = "result_page"
+    if next_button_disabled:
+        st.warning("🚨 사진을 촬영해주세요!")
+        
+    # ✅ 다음 촬영으로 이동
+    if current_order_index + 1 < len(caricature_orders):
+        if st.button("➡️ 다음 주문 사진 촬영", disabled=next_button_disabled):
+            st.session_state["current_order_index"] += 1
+            st.session_state["photo_taken"] = False  # 다음 촬영을 위해 초기화
+            camera_container.empty()  # 🚀 기존 카메라 입력 삭제
             st.rerun()
-        else:
-            st.warning("⚠️ 스케치 변환을 완료한 후 진행해주세요!")
+    else:
+        if st.button("🚀 캐리커쳐 변환하기", disabled=next_button_disabled):
+            st.session_state.page = "pickup_page"
+            st.rerun()

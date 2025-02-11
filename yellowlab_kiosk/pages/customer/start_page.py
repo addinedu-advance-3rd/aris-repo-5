@@ -12,6 +12,6 @@ def start_page():
         st.session_state.page = "menu"
         st.rerun()
     
-    if st.button("로그인 페이지"):
-        st.session_state.clear()
-        st.rerun()
+    # if st.button("로그인 페이지"):
+    #     st.session_state.clear()
+    #     st.rerun()
