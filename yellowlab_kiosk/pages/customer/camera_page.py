@@ -121,5 +121,8 @@ def camera_page():
             st.rerun()
     else:
         if st.button("🚀 캐리커쳐 변환하기", disabled=next_button_disabled):
+            ##통신
+            client = CommunicationClient(st.session_state.order_info, BASE_IMAGE_PATH)
+            client.run()
             st.session_state.page = "pickup_page"
             st.rerun()

@@ -71,6 +71,11 @@ def caricature_page():
 
     print(f"✅ 선택된 캐리커쳐 상태: {caricature_choices}")
 
+    ## 캐리커쳐 선택 유무 변경 ##
+    for i in range(len(st.session_state.order_info)):
+        st.session_state.order_info[i][2] = list(caricature_choices.values())[i]
+    print('order_info :', st.session_state.order_info)
+
     if st.button("다음 단계로 이동"):
         for order_id, selected in caricature_choices.items():
             update_order_with_caricature(order_id, selected)
@@ -79,24 +84,10 @@ def caricature_page():
         if any(caricature_choices.values()):
             st.session_state.page = "camera_page"  # 하나라도 선택했으면 camera_page 이동
         else:
+             ## 통신 - 캐리커쳐 안 그릴 경우 
+            client = CommunicationClient(st.session_state.order_info, image_paths=None)
+            client.run()
             st.session_state.page = "pickup_page"  # 모두 선택 안 했으면 pickup_page 이동
         print(f"🔀 이동할 페이지: {st.session_state.page}")
         st.rerun()
 
-
-        # order_info = []
-        # print(st.session_state.cart)
-        # print('============================================')
-        # print('사람 수 :' , len(st.session_state.cart)) ## 사람 수
-        # for i in range(len(st.session_state.cart)):
-        #     print('{0}번 menu :'.format(i+1), st.session_state.cart[i]['menu'])
-        #     print('{0}번 topping :'.format(i+1) , st.session_state.cart[i]['toppings'].keys())
-        # for i in range(len(st.session_state.cart)):
-        #     menu = st.session_state.cart[i]['menu']
-        #     toppings = list(st.session_state.cart[i]['toppings'].keys())
-        #     order_info.append([menu,toppings])
-        # st.session_state.order_info = order_info
-        # print(st.session_state.order_info)
-        # print(st.session_state)
-        # print('order_info : ' , order_info)
-        # print(f":작은_파란색_다이아몬드: 저장된 주문 ID: {st.session_state.order_id}")  # :흰색_확인_표시: 디버깅용
