@@ -50,16 +50,36 @@ def fetch_dashboard_data():
 # ✅ Streamlit UI
 def dashboard_page():
     st.title("📊 관리자 대시보드")
-    st.write("키오스크 주문 및 캐리커쳐 통계를 한눈에 확인하세요.")
+
+    # ✅ 4. 빠른 이동 버튼
+    col1, col2, col3, col4, col5 = st.columns(5)
+    if col1.button("📜 주문 관리"):
+        st.session_state.page = "orders"
+        st.rerun()
+    if col2.button("📦 재고 관리"):
+        st.session_state.page = "inventory"
+        st.rerun()
+    if col3.button("🍦 메뉴 관리"):
+        st.session_state.page = "menu_management"
+        st.rerun()
+    # if col4.button("🎨 캐리커쳐 기록 관리"):
+    #     st.session_state.page = "caricature_logs"
+        st.rerun()
+    if col5.button("🚪 로그아웃"):
+        st.session_state.role = None
+        st.session_state.page = None
+        st.rerun()
+
+    st.write("일별 키오스크 주문 및 캐리커쳐 통계를 한눈에 확인하세요.")
 
     # ✅ 데이터 가져오기
     data = fetch_dashboard_data()
 
     # ✅ 1. 주요 통계 정보 (오늘의 주문, 매출, 캐리커쳐 비율)
     col1, col2, col3 = st.columns(3)
-    col1.metric(label="📦 총 주문 수", value=f"{data['total_orders']} 건")
-    col2.metric(label="💰 총 매출액", value=f"{data['total_revenue']} 원")
-    col3.metric(label="🎨 캐리커쳐 선택률", value=f"{data['caricature_ratio']} %")
+    col1.metric(label="📦 총 주문 수/일", value=f"{data['total_orders']} 건")
+    col2.metric(label="💰 총 매출액/일", value=f"{data['total_revenue']} 원")
+    col3.metric(label="🎨 캐리커쳐 선택률/일", value=f"{data['caricature_ratio']} %")
 
     st.divider()  # 구분선
 
@@ -95,21 +115,4 @@ def dashboard_page():
 
     st.divider()
 
-    # ✅ 4. 빠른 이동 버튼
-    col1, col2, col3, col4, col5 = st.columns(5)
-    if col1.button("📜 주문 관리"):
-        st.session_state.page = "orders"
-        st.rerun()
-    if col2.button("📦 재고 관리"):
-        st.session_state.page = "inventory"
-        st.rerun()
-    if col3.button("🍦 메뉴 관리"):
-        st.session_state.page = "menu_management"
-        st.rerun()
-    if col4.button("🎨 캐리커쳐 기록 관리"):
-        st.session_state.page = "caricature_logs"
-        st.rerun()
-    if col5.button("🚪 로그아웃"):
-        st.session_state.role = None
-        st.session_state.page = None
-        st.rerun()
+    

@@ -13,42 +13,42 @@ def save_order_to_db():
     cursor = conn.cursor()
 
     try:
-        # 1️⃣ 주문 저장 (orders 테이블)
+        new_order_ids = []  # ✅ 새롭게 생성된 주문 ID 저장
+
         for item in st.session_state.cart:
             cursor.execute(
                 "INSERT INTO orders (flavor_id, selected_caricature, total_price) VALUES (%s, %s, %s)",
-                (item["menu_id"], False, item["total_price"])
+                (item["menu_id"], None, item["total_price"])  # ✅ 캐리커쳐 선택 전이므로 None
             )
             order_id = cursor.lastrowid  # ✅ 방금 추가된 주문 ID 가져오기
-            st.session_state.order_id = order_id  # ✅ 세션에 저장 (캐리커쳐 페이지에서 사용)
+            new_order_ids.append(order_id)
 
-            # 2️⃣ 토핑 저장 (order_topping 테이블)
+            # 토핑 저장
             for topping, details in item["toppings"].items():
                 cursor.execute(
                     "INSERT INTO order_topping (order_id, topping_id, quantity) VALUES (%s, %s, %s)",
                     (order_id, details["id"], details["quantity"])
                 )
 
-            # 3️⃣ 재고 감소 처리 (flavor & topping)
+            # 재고 감소 처리
             cursor.execute("UPDATE flavor SET stock_quantity = stock_quantity - %s WHERE flavor_id = %s",
                            (item["quantity"], item["menu_id"]))
             for topping, details in item["toppings"].items():
                 cursor.execute("UPDATE topping SET stock_quantity = stock_quantity - %s WHERE topping_id = %s",
                                (details["quantity"], details["id"]))
 
-        conn.commit()  # 변경 사항 저장
+        conn.commit()
         st.success("✅ 주문이 성공적으로 저장되었습니다!")
-        print(st.session_state.cart)
 
-        print(f"🔹 저장된 주문 ID: {st.session_state.order_id}")  # ✅ 디버깅용
+        # ✅ 최신 주문 목록을 세션에 저장
+        st.session_state.latest_order_ids = new_order_ids
+        print(f"🆕 최신 주문 목록 저장: {st.session_state.latest_order_ids}")
 
-        # 장바구니 비우고 캐리커쳐 선택 페이지로 이동
-        st.session_state.cart = []
         st.session_state.page = "caricature_page"
         st.rerun()
 
     except Exception as e:
-        conn.rollback()  # 오류 발생 시 롤백
+        conn.rollback()
         st.error(f"❌ 주문 저장 실패: {e}")
 
     finally:

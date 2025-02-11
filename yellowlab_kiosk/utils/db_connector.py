@@ -6,6 +6,7 @@ def get_db_connection():
         host="192.168.0.54",
         user="yellowlab",
         password="1234",
-        database="yellowlab_kiosk"
+        database="yellowlab_kiosk",
+        port="3306"
     )
     return conn
