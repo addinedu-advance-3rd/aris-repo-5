@@ -38,14 +38,34 @@ def save_order_to_db():
                                (details["quantity"], details["id"]))
 
         conn.commit()
+        ## server에 전송할 order_info 생성
+        order_info = []
+
+        for i in range(len(st.session_state.cart)):
+            print('{0}번 menu :'.format(i+1), st.session_state.cart[i]['menu'])
+            print('{0}번 topping :'.format(i+1) , st.session_state.cart[i]['toppings'].keys())
+        
+        for i in range(len(st.session_state.cart)):
+            menu = st.session_state.cart[i]['menu']
+            toppings = list(st.session_state.cart[i]['toppings'].keys())
+            order_info.append([menu,toppings,False])
+
+        st.session_state.order_info = order_info
+        print('order_info : ' , order_info)
+
         st.success("✅ 주문이 성공적으로 저장되었습니다!")
 
         # ✅ 최신 주문 목록을 세션에 저장
         st.session_state.latest_order_ids = new_order_ids
         print(f"🆕 최신 주문 목록 저장: {st.session_state.latest_order_ids}")
 
+        for i in range(len(st.session_state.order_info)):
+            st.session_state.order_info[i].append(False)
+            
         st.session_state.page = "caricature_page"
         st.rerun()
+
+        
 
     except Exception as e:
         conn.rollback()
