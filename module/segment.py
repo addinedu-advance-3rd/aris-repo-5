@@ -1,4 +1,5 @@
 ## 이미지에서 얼굴만 분류 ##
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0: 모든 메시지, 3: 에러만
 os.environ['GLOG_minloglevel'] = '3'
@@ -10,11 +11,11 @@ from mediapipe.tasks.python import BaseOptions
 import cv2
 import numpy as np
 
-def get_segment_face_image(image):
 
+def get_segment_face_image(image):
     # 이미지 세그멘테이션 모델 설정
     options = vision.ImageSegmenterOptions(
-        base_options=BaseOptions(model_asset_path="/home/addinedu/aris/aris-repo-51/module/model/selfie_multiclass_256x256.tflite"),
+        base_options=BaseOptions(model_asset_path="./module/model/selfie_multiclass_256x256.tflite"),
         output_category_mask=True, # 분류(category) 마스크를 출력할지 여부를 결정하는 옵션
         running_mode=vision.RunningMode.IMAGE)
     segmenter = vision.ImageSegmenter.create_from_options(options)
@@ -53,8 +54,8 @@ def get_segment_face_image(image):
 
     return segment_face_image, hair_mask, face_mask
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     image = cv2.imread("/home/addinedu/aris/image copy 2.png")
     segment_face_image = get_segment_face_image(image)
 
