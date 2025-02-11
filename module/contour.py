@@ -5,6 +5,7 @@ import numpy as np
 from skimage.morphology import skeletonize
 from .segment import get_segment_face_image
 
+
 def simplify_skeleton(skeleton, dilate_iterations=1, erode_iterations=1, kernel_size=2):
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
 
@@ -21,8 +22,8 @@ def simplify_skeleton(skeleton, dilate_iterations=1, erode_iterations=1, kernel_
     simplified = skeletonize(simplified > 0)
     return simplified
 
-def get_contour_image(image, hair_mask, face_mask):
 
+def get_contour_image(image, hair_mask, face_mask):
     # 외곽선 검출 
     contours_hair, _ = cv2.findContours(hair_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours_face, _ = cv2.findContours(face_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -39,29 +40,34 @@ def get_contour_image(image, hair_mask, face_mask):
     face_image = image.copy()
     face_image[face_mask_3ch == 0] = 0
 
-    # # 얼굴 블러 처리
-    # blurred = cv2.GaussianBlur(face_image, (3,3), 1.5)
+    # 얼굴 블러 처리
+    blurred = cv2.GaussianBlur(face_image, (3,3), 1.5)
 
     # 얼굴 엣지
     blurred_gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
+    '''
+    # 코 인식을 위한 명암 극대화
+    #cv2.imwrite('blurred_gray_before.jpg', blurred_gray)
+    #clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4,4))
+    #blurred_gray = clahe.apply(blurred_gray)
+    #cv2.imwrite('blurred_gray.jpg', blurred_gray)
+    '''
     edges = cv2.Canny(blurred_gray, 50, 200)
 
     # 외곽선 + 얼굴 엣지
     contour_image = cv2.bitwise_or(contour_image, edges)
-
-    cv2.imwrite('canny_img.jpg', contour_image)
     
     # 스켈레톤 처리
     skeleton = skeletonize(contour_image // 255) * 255
     simple_skeleton = simplify_skeleton(skeleton)
     contour_image = (simple_skeleton * 255).astype(np.uint8)
 
-    
+    cv2.imwrite('canny_img.jpg', contour_image)
 
     return contour_image
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     image = cv2.imread("./module/image/25=11_Cartoonize Effect.jpg")
     segment_face_image, hair_mask, face_mask = get_segment_face_image(image)
     contour_image = get_contour_image(segment_face_image, hair_mask, face_mask)
