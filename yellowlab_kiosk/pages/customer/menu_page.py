@@ -2,6 +2,11 @@ import streamlit as st
 import os
 from utils.db_connector import get_db_connection
 
+#------------------------
+# ✅ 장바구니 최대 개수 제한
+MAX_CART_ITEMS = 2
+#--------------------------
+
 def fetch_menu_data():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -51,21 +56,7 @@ def get_topping_cart_count(topping_id, topping_options):
             if value['id'] == topping_id:
                 cart_count += 1
                 print(f'{key}의 토핑 개수 {cart_count}')
-    # if len(st.session_state.cart) > 0:
-    #     for item in st.session_state.cart[0].items():  # 장바구니의 각 아이템을 순회
-    #         print(item)
-        # if len(item["toppings"]) > 0:  # 토핑이 존재하는 경우
-        #     for topping in item["toppings"]:
-        #         print(topping)
-        #         cart_count += 1  # ✅ 개별 토핑 개수 정확히 반영
-    # print(st.session_state.cart)
-    # cart_count = sum(
-    #     1  # ✅ 개별 토핑 개수 정확히 반영
-    #     for item in st.session_state.cart
-    #     if topping_id in item["toppings"]
-    #     for topping_data in [item["toppings"][topping_id]]
-    # )
-    
+                
     return selected_count + cart_count  # ✅ 현재 선택한 개수 + 장바구니 개수 합산
 
 
@@ -93,6 +84,13 @@ def menu_page():
     if "show_modal" not in st.session_state:
         st.session_state.show_modal = False
 
+#----------------------------------------------------------------------------
+    # ✅ 장바구니 개수 확인
+    cart_count = len(st.session_state.cart)
+    if cart_count >= MAX_CART_ITEMS:
+        st.warning(f"⚠️ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
+#----------------------------------------------------------------------------
+
     # ✅ 아이스크림 선택 화면
     st.subheader("🍨 아이스크림 선택")
     cols = st.columns(len(flavor_options))  # 메뉴 수에 맞춰 컬럼 생성
@@ -106,12 +104,21 @@ def menu_page():
             if details["stock"] == 0:  # ✅ 재고가 없으면 '품절' 메시지 출력
                 st.write("❌ 품절")
             else:
-                if st.button(f"선택하기", key=f"select_{menu}"):
-                    st.session_state.selected_menu = menu  # 선택한 메뉴 저장
-                    st.session_state.selected_toppings = []  # ✅ 새 메뉴 선택 시 기존 토핑 초기화
-                    st.session_state.show_modal = True  # ✅ Show modal
-                    st.rerun()  # UI 새로고침
-
+                #----------------------------------------------------
+                disabled = cart_count >= MAX_CART_ITEMS
+                #----------------------------------------------------
+                if st.button(f"선택하기", key=f"select_{menu}", disabled=disabled):
+                    #---------------------------------------------------
+                    if cart_count < MAX_CART_ITEMS:
+                    #---------------------------------------------------
+                        st.session_state.selected_menu = menu  # 선택한 메뉴 저장
+                        st.session_state.selected_toppings = []  # ✅ 새 메뉴 선택 시 기존 토핑 초기화
+                        st.session_state.show_modal = True  # ✅ Show modal
+                        st.rerun()  # UI 새로고침
+                    #----------------------------------------------------------------------
+                    else:
+                        st.error(f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
+                    #----------------------------------------------------------------------
 
     # ✅ Display modal-like options
     if st.session_state.show_modal and st.session_state.selected_menu:
@@ -188,20 +195,25 @@ def menu_page():
                     for topping in st.session_state.selected_toppings
                 }
 
-                st.session_state.cart.append({
-                    "menu_id": selected_details["id"],
-                    "menu": st.session_state.selected_menu,
-                    "quantity": 1,
-                    "base_price": selected_details["price"],
-                    "toppings": selected_toppings_data,
-                    "total_price": selected_details["price"] + sum(t["price"] for t in selected_toppings_data.values()),
-                })
+                #---------------------------------------------------------
+                if len(st.session_state.cart) >= MAX_CART_ITEMS:
+                    st.error(f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
+                else:
+                #------------------------------------------------------------
+                    st.session_state.cart.append({
+                        "menu_id": selected_details["id"],
+                        "menu": st.session_state.selected_menu,
+                        "quantity": 1,
+                        "base_price": selected_details["price"],
+                        "toppings": selected_toppings_data,
+                        "total_price": selected_details["price"] + sum(t["price"] for t in selected_toppings_data.values()),
+                    })
 
-                st.session_state.warning_message = None  # ✅ 성공적으로 추가되었으면 경고 메시지 제거
-                st.success(f"{st.session_state.selected_menu}이(가) 장바구니에 추가되었습니다!")
-                st.session_state.selected_menu = None  # ✅ 선택 초기화
-                st.session_state.show_modal = False  # ✅ Hide modal
-                st.rerun()
+                    st.session_state.warning_message = None  # ✅ 성공적으로 추가되었으면 경고 메시지 제거
+                    st.success(f"{st.session_state.selected_menu}이(가) 장바구니에 추가되었습니다!")
+                    st.session_state.selected_menu = None  # ✅ 선택 초기화
+                    st.session_state.show_modal = False  # ✅ Hide modal
+                    st.rerun()
 
 
             # ✅ 경고 메시지가 있으면 표시
@@ -230,9 +242,14 @@ def menu_page():
             col1, col2 = st.sidebar.columns(2)
             with col1:
                 # ✅ + 버튼 추가 (메뉴 개별 추가)
-                if st.button("➕", key=f"plus_{i}"):
-                    st.session_state.cart.append(item.copy())  # 같은 항목 추가
-                    st.rerun()
+                if st.button("➕", key=f"plus_{i}", disabled=len(st.session_state.cart) >= MAX_CART_ITEMS):
+                    #----------------------------------------------------------------------
+                    if len(st.session_state.cart) < MAX_CART_ITEMS:
+                        st.session_state.cart.append(item.copy())  # 같은 항목 추가
+                        st.rerun()
+                    else:
+                        st.error(f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
+                    #----------------------------------------------------------------------
 
             with col2:
                 # ✅ 개별 삭제 버튼 추가
