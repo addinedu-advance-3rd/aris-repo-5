@@ -12,7 +12,7 @@ from caricature import get_arm_path
 from module.model import get_caricature
 from xArm_Python_SDK.xarm import version
 from xArm_Python_SDK.xarm.wrapper import XArmAPI
-from module.arm_final import RobotMain
+from xArm_Python_SDK.arm_final import RobotMain
 import base64
 app = Flask(__name__)
 
