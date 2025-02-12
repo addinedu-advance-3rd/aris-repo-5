@@ -1,5 +1,4 @@
 ## 이미지 경계선 검출 ##
-
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
@@ -39,7 +38,7 @@ def get_contour_image(image, hair_mask, face_mask):
     face_image = image.copy()
     face_image[face_mask_3ch == 0] = 0
 
-    # # 얼굴 블러 처리
+    # 얼굴 블러 처리
     # blurred = cv2.GaussianBlur(face_image, (3,3), 1.5)
 
     # 얼굴 엣지
@@ -49,14 +48,12 @@ def get_contour_image(image, hair_mask, face_mask):
     # 외곽선 + 얼굴 엣지
     contour_image = cv2.bitwise_or(contour_image, edges)
 
-    cv2.imwrite('canny_img.jpg', contour_image)
+    cv2.imwrite('image/canny_img.jpg', contour_image)
     
     # 스켈레톤 처리
     skeleton = skeletonize(contour_image // 255) * 255
     simple_skeleton = simplify_skeleton(skeleton)
     contour_image = (simple_skeleton * 255).astype(np.uint8)
-
-    
 
     return contour_image
 

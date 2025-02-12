@@ -17,8 +17,8 @@ import base64
 app = Flask(__name__)
 
 # 저장할 디렉토리 설정
-RAW_IMAGE_SAVE_DIR = 'raw_image'
-CARI_IMAGE_SAVE_DIR = 'cari_image'
+RAW_IMAGE_SAVE_DIR = 'image/raw_image'
+CARI_IMAGE_SAVE_DIR = 'image/cari_image'
 
 os.makedirs(RAW_IMAGE_SAVE_DIR, exist_ok=True)
 os.makedirs(CARI_IMAGE_SAVE_DIR, exist_ok=True)
