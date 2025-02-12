@@ -40,7 +40,7 @@ def process_order():
             if image_path:
                 # 좌표 따기
                 get_caricature(image_path)
-                image_path = os.path.join(CARI_IMAGE_SAVE_DIR, f'image{image_cnt}.jpg')
+                image_path = os.path.join(CARI_IMAGE_SAVE_DIR, f'image{image_cnt-1}.jpg')
                 coor = get_arm_path(image_path)
                 print("이미지 있음")
             else:
