@@ -1,6 +1,7 @@
 import os
 import cv2
 import argparse
+from module.crop_image import crop_face_from_image
 from module.segment import get_segment_face_image
 from module.contour import get_contour_image
 from module.path_planning import *
@@ -14,7 +15,7 @@ def get_arm_path(image_path):
     캐리커쳐 생성 및 로봇 arm path 생성
     '''
 
-    image = cv2.imread(image_path)
+    image = crop_face_from_image(image_path)
 
     _ , hair_mask, face_mask = get_segment_face_image(image)
     
