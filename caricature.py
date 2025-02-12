@@ -18,7 +18,7 @@ def get_arm_path(image_path):
     캐리커쳐 생성 및 로봇 arm path 생성
     '''
 
-    image = cv2.imread(image_path)
+    image = crop_face_from_image(image_path)
 
     image = crop_face_from_image(image)
     if image == None:
