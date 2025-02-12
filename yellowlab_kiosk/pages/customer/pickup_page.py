@@ -63,7 +63,7 @@ def generate_qr_code(sketch_id):
     qr_img.save(img_buffer, format="PNG")
     return img_buffer.getvalue()
 def pickup_page():
-    st.title("🍦 아이스크림 픽업 안내")
+    st.header("🍦 아이스크림을 픽업해주세요!")
     
     orders = get_latest_orders()
 
@@ -85,18 +85,28 @@ def pickup_page():
         cols = st.columns(len(chunk))  # 현재 줄의 주문 수만큼 컬럼 생성
         for col, (order_id, flavor_name, topping_names, selected_caricature) in zip(cols, chunk):
             with col:
-                st.markdown(f"**🆔 주문 번호: {order_id}**")
-                st.write(f"🍦 **맛:** {flavor_name}")
-                st.write(f"🍫 **토핑:** {topping_names if topping_names else '없음'}")
-                
-                # ✅ 캐리커쳐 선택 여부 확인
-                if selected_caricature == 1:
-                    st.write("🎨 **캐리커쳐 선택** ✅")
-                    qr_code_image = generate_qr_code(sketch_index)
-                    st.image(qr_code_image, caption="📱 QR 코드 스캔 후 스케치 다운로드", use_container_width=True)
-                    sketch_index += 1  # ✅ 다음 스케치 번호 증가
-                else:
-                    st.write("🎨 **캐리커쳐 선택** ❌")
+                with st.container(border=True):
+                    st.markdown(f"""<p style='font-size: 20px; font-weight: bold; color: #007BFF;'>🆔 주문 번호: {order_id}</p>""", unsafe_allow_html=True)
+                    st.write(f"🍦 **맛:** {flavor_name} | 🍫 **토핑:** {topping_names if topping_names else '없음'}")
+                               
+                    # ✅ 캐리커쳐 선택 여부 확인
+                    if selected_caricature == 1:
+                        st.write("🎨 **캐리커쳐 선택** ✅")
+                        qr_code_image = generate_qr_code(sketch_index)
+                        st.image(qr_code_image, caption="📱 QR 코드 스캔 후 스케치 다운로드", use_container_width=True)
+                        sketch_index += 1  # ✅ 다음 스케치 번호 증가
+                    else:
+                        st.write("🎨 **캐리커쳐 선택** ❌")
+                        
+    st.markdown(
+    """
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 10px; border: 2px solid #ddd; text-align: center; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); margin: 20px 0;">
+        <h2 style="color: #14148C; margin-bottom: 10px;"> "🤖 로봇은 실수할 수 있어요!" </h2>
+        <p style="font-size: 18px; color: #333; font-weight: bold;"> 열심히 응원해주면 더 잘할지도..? 💙 </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
     if st.button("🔄 처음으로 돌아가기"):
         keys_to_keep = ["role"]  # 로그인 정보 유지

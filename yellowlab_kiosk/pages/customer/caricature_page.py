@@ -1,6 +1,7 @@
 import streamlit as st
 from utils.db_connector import get_db_connection
 from utils.communication import CommunicationClient,send_order_data
+
 def update_order_with_caricature(order_id, selected):
     """ MySQL에 개별 주문의 캐리커쳐 선택 여부 업데이트 """
     conn = get_db_connection()
@@ -19,7 +20,8 @@ def update_order_with_caricature(order_id, selected):
         conn.close()
 
 def caricature_page():
-    st.title("로봇팔이 그려주는 당신의 캐리커쳐")
+    st.header("🎨 로봇팔이 그려주는 당신의 캐리커쳐")
+    st.subheader("📜주문번호를 확인하고 캐리커쳐를 선택하세요.")
 
     # 현재 세션에 저장된 최신 주문 목록 가져오기
     if "latest_order_ids" not in st.session_state or not st.session_state.latest_order_ids:
@@ -58,15 +60,28 @@ def caricature_page():
     caricature_choices = {}
     
     for order_id, flavor_name, topping_names in orders:
-        st.subheader(f"주문 번호: {order_id} - 맛: {flavor_name}")
-        st.write(f"토핑: {topping_names if topping_names else '없음'}")
-        choice = st.radio(
-            f"주문 {order_id}의 캐리커쳐 선택 여부:",
-            ["캐리커쳐 선택", "선택 안함"],
-            index=1,  # 기본값: 선택 안함
-            key=f"caricature_{order_id}"
-        )
-        caricature_choices[order_id] = (choice == "캐리커쳐 선택")
+        with st.container(border=True):  # ✅ 모든 내용을 박스 안에 포함
+            st.markdown(
+                f"""
+                <div style='padding: 15px; border: 2px solid #ddd; border-radius: 10px; background-color: #f9f9f9; margin-bottom: 10px;'>
+                    <p style='font-size: 18px; font-weight: bold; color: #007BFF;'>🆔 주문 번호: {order_id}</p>
+                    <p style='font-size: 20px; font-weight: bold; margin: 5px 0;'>🍨 {flavor_name}</p>
+                    <p style='font-size: 18px; margin: 5px 0;'>└ 🍫 <strong>토핑:</strong> {topping_names if topping_names else '없음'}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # ✅ 라디오 버튼을 컨테이너 내부로 이동
+            choice = st.radio(
+                f"🎨 **주문 {order_id}**의 캐리커쳐 선택 여부:",
+                ["캐리커쳐 선택", "선택 안함"],
+                index=1,  
+                key=f"caricature_{order_id}",
+                horizontal=True  # ✅ 가로 정렬로 선택하기 쉽게 함
+            )
+
+            caricature_choices[order_id] = (choice == "캐리커쳐 선택")
 
 
     print(f"✅ 선택된 캐리커쳐 상태: {caricature_choices}")
@@ -76,7 +91,7 @@ def caricature_page():
         st.session_state.order_info[i][2] = list(caricature_choices.values())[i]
     print('order_info :', st.session_state.order_info)
 
-    if st.button("다음 단계로 이동"):
+    if st.button("➡️ 다음 단계로 이동"):
         for order_id, selected in caricature_choices.items():
             update_order_with_caricature(order_id, selected)
         
@@ -90,4 +105,3 @@ def caricature_page():
             st.session_state.page = "pickup_page"  # 모두 선택 안 했으면 pickup_page 이동
         print(f"🔀 이동할 페이지: {st.session_state.page}")
         st.rerun()
-

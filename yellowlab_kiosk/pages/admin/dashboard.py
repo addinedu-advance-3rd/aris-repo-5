@@ -70,7 +70,7 @@ def dashboard_page():
         st.session_state.page = None
         st.rerun()
 
-    st.write("일별 키오스크 주문 및 캐리커쳐 통계를 한눈에 확인하세요.")
+    st.subheader("일별 키오스크 주문 및 캐리커쳐 통계를 한눈에 확인하세요.")
 
     # ✅ 데이터 가져오기
     data = fetch_dashboard_data()

@@ -63,7 +63,7 @@ def get_topping_cart_count(topping_id, topping_options):
 
 def menu_page():
     st.title("🍦 메뉴 선택")
-    st.header("원하는 메뉴를 선택하세요.")
+    st.subheader("메뉴를 선택하세요.")
 
     # MySQL에서 아이스크림 맛과 토핑 데이터 가져오기
     flavor_options, topping_options = fetch_menu_data()
@@ -92,33 +92,41 @@ def menu_page():
 #----------------------------------------------------------------------------
 
     # ✅ 아이스크림 선택 화면
-    st.subheader("🍨 아이스크림 선택")
     cols = st.columns(len(flavor_options))  # 메뉴 수에 맞춰 컬럼 생성
 
     for index, (menu, details) in enumerate(flavor_options.items()):
         with cols[index]:  # 각 컬럼에 개별 아이스크림 배치
-            if os.path.exists(details["image"]):
-                st.image(details["image"], caption=menu, use_container_width=True)
-            st.write(f"{menu} - {details['price']}원")
+            with st.container(border=True):
+                if os.path.exists(details["image"]):
+                    st.image(details["image"], use_container_width=True)
+                st.markdown(
+                    f"""
+                    <div style='text-align: center;'>
+                        <h3 style='font-weight: bold;'> 🍨 {menu}</h3>
+                        <p style='font-size: 22px; font-weight: bold; color: #14148C;'> {details['price']} 원</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-            if details["stock"] == 0:  # ✅ 재고가 없으면 '품절' 메시지 출력
-                st.write("❌ 품절")
-            else:
-                #----------------------------------------------------
-                disabled = cart_count >= MAX_CART_ITEMS
-                #----------------------------------------------------
-                if st.button(f"선택하기", key=f"select_{menu}", disabled=disabled):
-                    #---------------------------------------------------
-                    if cart_count < MAX_CART_ITEMS:
-                    #---------------------------------------------------
-                        st.session_state.selected_menu = menu  # 선택한 메뉴 저장
-                        st.session_state.selected_toppings = []  # ✅ 새 메뉴 선택 시 기존 토핑 초기화
-                        st.session_state.show_modal = True  # ✅ Show modal
-                        st.rerun()  # UI 새로고침
-                    #----------------------------------------------------------------------
-                    else:
-                        st.error(f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
-                    #----------------------------------------------------------------------
+                if details["stock"] == 0:  # ✅ 재고가 없으면 '품절' 메시지 출력
+                    st.write("❌ 품절")
+                else:
+                    #----------------------------------------------------
+                    disabled = cart_count >= MAX_CART_ITEMS
+                    #----------------------------------------------------
+                    if st.button(f"선택하기", key=f"select_{menu}", disabled=disabled, use_container_width=True):
+                        #---------------------------------------------------
+                        if cart_count < MAX_CART_ITEMS:
+                        #---------------------------------------------------
+                            st.session_state.selected_menu = menu  # 선택한 메뉴 저장
+                            st.session_state.selected_toppings = []  # ✅ 새 메뉴 선택 시 기존 토핑 초기화
+                            st.session_state.show_modal = True  # ✅ Show modal
+                            st.rerun()  # UI 새로고침
+                        #----------------------------------------------------------------------
+                        else:
+                            st.error(f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
+                        #----------------------------------------------------------------------
 
     # ✅ Display modal-like options
     if st.session_state.show_modal and st.session_state.selected_menu:
@@ -141,24 +149,33 @@ def menu_page():
 
             for index, (topping, details) in enumerate(topping_options.items()):
                 with topping_cols[index]:  # 각 컬럼에 개별 토핑 배치
-                    if os.path.exists(details["image"]):
-                        st.image(details["image"], caption=topping, use_container_width=True)
-                    st.write(f"{topping} - {details['price']}원")
-
-                    if details["stock"] == 0:
-                        st.write("🚫 품절")
-                    else:
-                        # ✅ 체크박스 UI 적용 (선택하면 quantity=1 자동 설정)
-                        selected = st.checkbox(
-                            label=topping,
-                            value=topping in st.session_state.selected_toppings,
-                            key=f"topping_{topping}"
+                    with st.container(border=True):
+                        if os.path.exists(details["image"]):
+                            st.image(details["image"], use_container_width=True)
+                        st.markdown(
+                            f"""
+                            <div style='text-align: center;'>
+                                <p style='font-size: 18px; font-weight: bold;'> {topping}</p>
+                                <p style='font-size: 18px; color: #14148C;'> + {details['price']}원</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
                         )
 
-                        # ✅ 체크박스 상태 변경 시, 업데이트 함수 실행 (재고 체크 포함)
-                        if selected != (topping in st.session_state.selected_toppings):
-                            update_topping_selection(topping, details["id"], topping_options)
-                            st.rerun()  # UI 업데이트
+                        if details["stock"] == 0:
+                            st.write("🚫 품절")
+                        else:
+                            # ✅ 체크박스 UI 적용 (선택하면 quantity=1 자동 설정)
+                            selected = st.checkbox(
+                                label=topping,
+                                value=topping in st.session_state.selected_toppings,
+                                key=f"topping_{topping}"
+                            )
+
+                            # ✅ 체크박스 상태 변경 시, 업데이트 함수 실행 (재고 체크 포함)
+                            if selected != (topping in st.session_state.selected_toppings):
+                                update_topping_selection(topping, details["id"], topping_options)
+                                st.rerun()  # UI 업데이트
 
             # ✅ 가격 계산
             topping_total = sum(topping_options[t]["price"] for t in st.session_state.selected_toppings)
@@ -228,6 +245,11 @@ def menu_page():
 
     # ✅ 장바구니 UI 추가 (삭제 버튼 포함)
     st.sidebar.header("🛒 장바구니")
+
+    # ✅ 에러 메시지가 있고, 표시 설정이 되어 있으면 출력
+    if st.session_state.get("show_error", False) and st.session_state.get("error_message"):
+        st.error(st.session_state.error_message)
+
     if st.session_state.cart:
         for i, item in enumerate(st.session_state.cart):
             topping_details = [f"{t} (x{d['quantity']}) ({d['price']}원)" for t, d in item["toppings"].items()]
@@ -244,11 +266,35 @@ def menu_page():
                 # ✅ + 버튼 추가 (메뉴 개별 추가)
                 if st.button("➕", key=f"plus_{i}", disabled=len(st.session_state.cart) >= MAX_CART_ITEMS):
                     #----------------------------------------------------------------------
-                    if len(st.session_state.cart) < MAX_CART_ITEMS:
-                        st.session_state.cart.append(item.copy())  # 같은 항목 추가
+                    if len(st.session_state.cart) >= MAX_CART_ITEMS:
+                        st.session_state.error_message = f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!"
                         st.rerun()
-                    else:
-                        st.error(f"❌ 장바구니에는 최대 {MAX_CART_ITEMS}개까지만 담을 수 있습니다!")
+
+                    menu_id = item["menu_id"]
+                    current_cart_count = get_flavor_cart_count(menu_id)
+                    total_after_add = current_cart_count + 1  # ✅ 추가될 개수 포함
+
+                    # ✅ 아이스크림 재고 초과 여부 체크
+                    if total_after_add > flavor_options[item["menu"]]["stock"]:
+                        st.session_state.error_message = f"❌ {item['menu']} 아이스크림의 재고가 부족합니다! 더 이상 추가할 수 없습니다."
+                        st.session_state.show_error = True  # ✅ 에러 메시지를 표시하도록 설정
+                        st.rerun()
+
+                    # ✅ 토핑 재고 체크
+                    for topping, details in item["toppings"].items():
+                        topping_id = details["id"]
+                        total_topping_after_add = get_topping_cart_count(topping_id, topping_options)  # ✅ 추가될 개수 반영
+
+                        if total_topping_after_add > topping_options[topping]["stock"]:
+                            st.session_state.error_message = f"❌ {topping} 토핑의 재고가 부족합니다! 추가할 수 없습니다."
+                            st.session_state.show_error = True  # ✅ 에러 메시지를 표시하도록 설정
+                            st.rerun()
+
+                    # ✅ 모든 재고가 충분하면 추가
+                    st.session_state.error_message = None
+                    st.session_state.show_error = False  # ✅ 에러 메시지 숨김
+                    st.session_state.cart.append(item.copy())  # 같은 항목 추가
+                    st.rerun()
                     #----------------------------------------------------------------------
 
             with col2:
