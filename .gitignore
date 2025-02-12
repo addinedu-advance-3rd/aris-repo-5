@@ -1,0 +1,5 @@
+xArm_Python_SDK/
+__pycache__/
+*.log
+*.jpg
+*.safetensors
