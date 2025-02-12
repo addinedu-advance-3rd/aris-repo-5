@@ -11,6 +11,8 @@ expanded_hull = []
 def nose_masking(contour_image, nose_points):
     
     global expanded_hull
+
+    expanded_hull = []
     
     offset = 15  # 마스크 크기를 얼마나 키울지 설정 (픽셀 단위)
     

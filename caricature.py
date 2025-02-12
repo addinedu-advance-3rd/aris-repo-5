@@ -20,15 +20,14 @@ def get_arm_path(image_path):
 
     image = crop_face_from_image(image_path)
 
-    image = crop_face_from_image(image)
-    if image == None:
+    if image is None:
         return None
 
     _ , hair_mask, face_mask = get_segment_face_image(image)
     
     landmark_results = get_landmark(image)
 
-    landmark_points = get_coordinates(landmark_results)
+    landmark_points = get_coordinates(landmark_results, image)
     nose_points = landmark_points["nose"]
     center_point = landmark_points["center"]
 

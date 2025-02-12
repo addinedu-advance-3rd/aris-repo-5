@@ -21,7 +21,9 @@ class RobotPathPlanner:
         sticker_center = (alpha,beta)
         sticker_origin = (m,n) (가장 왼쪽 위 좌표)
         '''
-        alpha , beta ,n, m = 92 , 94 , -268 ,-102.2
+        # alpha , beta ,n, m = 80, 80, -266.8, -90.2 # 너비 높이 왼쪽 점
+        alpha , beta ,n, m = 80, 80, -268.9, -102.9 # 너비 높이 왼쪽 점
+
 
         if len(image.shape) == 3:
             a,b,_ = image.shape
@@ -31,7 +33,7 @@ class RobotPathPlanner:
         print(a,b)
 
         scale = (beta/b)
-        self.converted_path.append([-212,-57]) #시작점
+        self.converted_path.append([-218, 10.2]) #시작점
 
         for x,y in path[1:]:
             if math.isnan(x):
@@ -42,8 +44,8 @@ class RobotPathPlanner:
                     if self.converted_path[-1] == ('up','up'):
                         self.converted_path.append((x,y))
                     else:
-                        if (self.converted_path[-1][0] != x and abs(self.converted_path[-1][1] - y) > 2) or (self.converted_path[-1][1] != y and abs(self.converted_path[-1][0] - x) > 2): ## 2차이 이상
-                            self.converted_path.append((x,y))
+                        # if (self.converted_path[-1][0] != x and abs(self.converted_path[-1][1] - y) > 1) or (self.converted_path[-1][1] != y and abs(self.converted_path[-1][0] - x) > 1): ## 2차이 이상
+                        self.converted_path.append((x,y))
         
     def del_up(self):
         '''
@@ -52,7 +54,7 @@ class RobotPathPlanner:
         arm_path = []
         for i in range(len(self.converted_path)-1):
             if self.converted_path[i][0] == 'up':
-                if abs(self.converted_path[i-1][0]-self.converted_path[i+1][0]) > 2 or abs(self.converted_path[i-1][1]-self.converted_path[i+1][1]) > 2 :
+                if abs(self.converted_path[i-1][0]-self.converted_path[i+1][0]) > 2 or abs(self.converted_path[i-1][1]-self.converted_path[i+1][1]) > 2:
                     arm_path.append(self.converted_path[i])
             else :
                 arm_path.append(self.converted_path[i])
@@ -62,7 +64,7 @@ class RobotPathPlanner:
 
     def add_down(self):
         i=1
-        while i <len(self.converted_path) -2 :
+        while i < len(self.converted_path) - 2 :
             if self.converted_path[i][0] == 'up':
                 self.converted_path.insert(i+2,('down','down'))
                 i+=1
@@ -74,7 +76,8 @@ class RobotPathPlanner:
         (x,y)좌표를 [x,y,z,r,p,yaw]로 변환
         '''
 
-        z,r,p,yaw = 150.5,74.4,86.6,-105.4 ##그림 그릴 때 초기 좌표 값
+        # z,r,p,yaw = 173.9, 168.3, 85.9, 3.4 ##그림 그릴 때 초기 좌표 값
+        z,r,p,yaw = 176.2, -133.9, 88.6, 59 ##그림 그릴 때 초기 좌표 값
 
         ## 초기값 세팅
         arm_coordinates = [[self.converted_path[0][0],self.converted_path[0][1],z+10,r,p,yaw]
@@ -82,7 +85,7 @@ class RobotPathPlanner:
 
         for (x,y) in self.converted_path[1:]:
             if arm_coordinates[-1] == ['up']:
-                arm_coordinates.append([x,y,160.5,r,p,yaw])
+                arm_coordinates.append([x,y,186.7,r,p,yaw])
             else :    
                 if x == 'up':
                     arm_coordinates.append(['up'])
