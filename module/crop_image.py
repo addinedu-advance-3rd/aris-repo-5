@@ -54,7 +54,7 @@ def crop_face_from_image(image_path, margin=50):
         cropped_face_image = image[y_min:y_max, x_min:x_max]
 
         # 디버깅용 저장
-        filename = "image/cropped_face.jpg"
+        filename = "./image/cropped_face.jpg"
         cv2.imwrite(filename, cropped_face_image)
         print(f"이미지 저장됨: {filename}")
 
@@ -64,10 +64,10 @@ def crop_face_from_image(image_path, margin=50):
         return None
 
 if __name__ == "__main__":
-    image_path = "./image/25=11_Cartoonize Effect.jpg"  # 경로 이미지 파일
+    image_path = "./image/1739411485911.jpg"  # 경로 이미지 파일
     cropped_face_image = crop_face_from_image(image_path)
     
     if cropped_face_image is not None:
-        filename = "cropped_face.jpg"
+        filename = "./image/cropped_face.jpg"
         cv2.imwrite(filename, cropped_face_image)
         print(f"이미지 저장됨: {filename}")

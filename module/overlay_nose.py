@@ -1,10 +1,14 @@
 ## 코 합성 ##
 import cv2
 import numpy as np
-from module.contour import simplify_skeleton
+from contour import *
 from skimage.morphology import skeletonize
 from pathlib import Path
 import random
+from crop_image import crop_face_from_image
+from segment import get_segment_face_image
+from landmark import get_landmark
+from coordinate import get_coordinates
 
 expanded_hull = []
 
@@ -120,10 +124,43 @@ def overlay_nose(contour_image, center_point):
     ## 코 합성
     mask = np.zeros(contour_image.shape[:2], dtype=np.uint8)
     cv2.fillPoly(mask, [expanded_hull], 255)
-    
+
+    # contour_image가 3채널인 경우 resized_nose를 3채널로 변환
+    if len(contour_image.shape) == 3:
+        resized_nose = cv2.cvtColor(resized_nose, cv2.COLOR_GRAY2BGR)
+
     # contour 이미지에 합성 (단일 채널)
     roi = contour_image[paste_y:paste_y+target_h, paste_x:paste_x+target_w]
     roi[:] = cv2.bitwise_or(roi, resized_nose)
-    cv2.imwrite('canny_with_overlayed_nose.jpg', contour_image)
+    cv2.imwrite('./image/canny_with_overlayed_nose.jpg', contour_image)
 
     return contour_image
+
+if __name__ == "__main__":
+
+    cropped_face = crop_face_from_image("./image/1739411485911.jpg")
+
+    segment_face_image, hair_mask, face_mask = get_segment_face_image(cropped_face)
+    cv2.imwrite('./image/segment_face_image.jpg', segment_face_image)
+
+    landmark_results = get_landmark(cropped_face)
+
+    landmark_points = get_coordinates(landmark_results, cropped_face)
+
+    contour_image = get_contour_image(segment_face_image, hair_mask, face_mask)
+
+    print(f"cropped_face: {cropped_face.shape}\nsegment_face_image: {segment_face_image.shape}\ncontour_image shape: {contour_image.shape}")
+
+    print("코 합성을 시작합니다.")
+
+    contour_image = nose_masking(contour_image, landmark_points["nose"])
+    cv2.imwrite('./image/expanded_nose_masking_contour.jpg', contour_image)
+    contour_image = overlay_nose(contour_image, landmark_points["center"])
+    cv2.imwrite('./image/canny_with_overlayed_nose.jpg', contour_image)
+
+    segment_face_image = nose_masking(segment_face_image, landmark_points["nose"])
+    cv2.imwrite('./image/expanded_nose_masking.jpg', segment_face_image)
+    segment_face_image = overlay_nose(segment_face_image, landmark_points["center"])
+    cv2.imwrite('./image/overlayed_nose.jpg', segment_face_image)
+
+    print("코 합성이 완료되었습니다.")

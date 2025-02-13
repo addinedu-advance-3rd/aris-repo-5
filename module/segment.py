@@ -9,6 +9,7 @@ from mediapipe.tasks.python import vision
 from mediapipe.tasks.python import BaseOptions
 import cv2
 import numpy as np
+from crop_image import crop_face_from_image
 
 def get_segment_face_image(image):
 
@@ -55,11 +56,21 @@ def get_segment_face_image(image):
 
 if __name__ == "__main__":
 
-    image = cv2.imread("/home/addinedu/aris/image copy 2.png")
-    segment_face_image = get_segment_face_image(image)
+    #image = cv2.imread("/home/addinedu/aris/image copy 2.png")
 
-    cv2.imshow("Image", segment_face_image)
-    # cv2.imwrite('segment_face_image.jpg', segment_face_image)
+    cropped_face = crop_face_from_image("./image/1739411485911.jpg")
+
+    segment_face_image, hair_mask, face_mask = get_segment_face_image(cropped_face)
+
+    # 결과 시각화
+    #cv2.imshow("Image", segment_face_image)
+    cv2.imwrite('./image/segment_face_image.jpg', segment_face_image)
+    """
+    hair_mask와 face_mask가 0과 1로만 이루어진 이진 마스크로 생성되고 있는데, 
+    이를 이미지로 저장하거나 표시할 때는 0과 255로 표시되게 만들면 시각화 가능
+    """
+    cv2.imwrite('./image/hair_mask.jpg', hair_mask * 255)
+    cv2.imwrite('./image/face_mask.jpg', face_mask * 255)
 
     while True:
         key = cv2.waitKey(1)  # 1ms 대기

@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
-from .segment import get_segment_face_image
+from segment import get_segment_face_image
 
 def simplify_skeleton(skeleton, dilate_iterations=1, erode_iterations=1, kernel_size=2):
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
@@ -48,7 +48,7 @@ def get_contour_image(image, hair_mask, face_mask):
     # 외곽선 + 얼굴 엣지
     contour_image = cv2.bitwise_or(contour_image, edges)
 
-    cv2.imwrite('image/canny_img.jpg', contour_image)
+    cv2.imwrite('./image/canny_img.jpg', contour_image)
     
     # 스켈레톤 처리
     skeleton = skeletonize(contour_image // 255) * 255
